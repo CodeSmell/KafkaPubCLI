@@ -6,7 +6,7 @@ This CLI utility was built to enable easy testing of products that consume from 
 
 ## Format for the Files
 The utility does not expect any format when publishing only a body on a Kafka message. 
-The entire contents of the file will be published as the body of the message
+The entire contents of the file will be published as the body of the message.
 It will not treat the EOL in any special way so this allows the content (like JSON) to be pretty printed and still be sent in its entirety. 
 
 For example a JSON that is pretty printed. 
@@ -24,8 +24,8 @@ This allows easy scanning and editing the file when testing.
 
 However, if headers are needed in the Kafka message the following format can be used:
 
-At the top of the file add the following  `--header` delimiter
-Every line above that delimiter will be expected to be a key value pair separated by a colon (:)
+At the top of the file add the following  `--header` delimiter.
+Every line above that delimiter will be expected to be a key value pair separated by a colon (:).
 All of the content below that delimiter will be considered the body of the Kafka message.
 
 ```
@@ -56,8 +56,8 @@ java -jar target/kafka-utils-0.0.1-SNAPSHOT.jar \
                             -messageLocation /dev/myKafkaFiles
 ```
 
-if the user only wants to run the utility against the directory once then add the parameter (`runOnce`). 
-if the user doesn't want to remove the file then add the parameter (`noDeleteFiles`).
+If the user only wants to run the utility against the directory once then add the parameter (`runOnce`). 
+If the user doesn't want to remove the file then add the parameter (`noDeleteFiles`).
 
 ``` 
 java -jar target/kafka-utils-0.0.1-SNAPSHOT.jar \

@@ -1,0 +1,100 @@
+package codesmell.kafka.content;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public class DefaultContentHandler implements ContentHandler {
+    
+    public static final String KEY_BOUNDARY = "--key";
+    public static final String HEADER_BOUNDARY = "--header"; 
+
+    /**
+     * Generate a Kafka ProducerRecord from the content passed in
+     * 
+     * @param content
+     * @return
+     */
+    @Override
+    public ProducerRecord<String, String> processContent(String topic, String content) {
+
+        KafkaParts parts = this.splitContentIntoParts(content);
+        
+        String key = parts.key;
+        List<Header> headers = parts.headers;
+        String bodyContent = parts.body;
+        
+        ProducerRecord<String, String> record = this.generateRecord(topic, key, headers, bodyContent);
+        
+        return record;
+        
+    }
+    
+    protected KafkaParts splitContentIntoParts(String content) {
+        KafkaParts parts = null;
+        
+        if (!Objects.isNull(content) && StringUtils.isNotBlank(content)) {
+            // we have content
+            parts = new KafkaParts();
+            String[] splitContent = content.split(HEADER_BOUNDARY, 2);
+            if (splitContent.length > 1) {
+                parts.headers = this.buildHeaders(splitContent[0]);
+                parts.body = splitContent[1].stripLeading();
+            } else {
+                parts.body = splitContent[0].stripLeading();
+            }
+        }
+        
+        return parts;
+    }
+    
+    /**
+     * each line is a key value pair
+     * 
+     * @param headerContent
+     * @return
+     */
+    private List<Header> buildHeaders(String headerContent) {
+        List<Header> headers = null;
+        
+        if (!Objects.isNull(headerContent) && StringUtils.isNotBlank(headerContent)) {
+            String[] splitHeaders = headerContent.split("\n");
+            if (ArrayUtils.isNotEmpty(splitHeaders)) {
+                
+                headers = new ArrayList<>();
+
+                for (String header : splitHeaders) {
+                    String[] splitKeyValue = header.split(":");
+                    if (ArrayUtils.isNotEmpty(splitKeyValue)) {
+                        String key = splitKeyValue[0];
+                        String value = splitKeyValue[1].stripTrailing();
+                        headers.add(new RecordHeader(key, value.getBytes()));
+                    }
+                }
+            }
+        }
+
+        return headers;
+    }
+    
+    private ProducerRecord<String, String> generateRecord(String topic, 
+            String key, List<Header> headers, String bodyContents) {
+        
+        Integer partition = null; // any partition will be fine
+        Long timestamp = null; // let broker assign
+        
+        return new ProducerRecord<>(topic, partition, timestamp, key, bodyContents, headers);
+    }
+    
+    public class KafkaParts {
+        String key;
+        List<Header> headers;
+        String body;
+    }
+}
