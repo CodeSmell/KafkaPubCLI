@@ -42,16 +42,39 @@ public class DefaultContentHandler implements ContentHandler {
         if (!Objects.isNull(content) && StringUtils.isNotBlank(content)) {
             // we have content
             parts = new KafkaParts();
-            String[] splitContent = content.split(HEADER_BOUNDARY, 2);
-            if (splitContent.length > 1) {
-                parts.headers = this.buildHeaders(splitContent[0]);
-                parts.body = splitContent[1].stripLeading();
-            } else {
-                parts.body = splitContent[0].stripLeading();
-            }
+            
+            // key
+            String headerContent = this.splitOutKey(parts, content);
+            
+            // headers
+            this.splitOutHeaders(parts, headerContent);
         }
         
         return parts;
+    }
+    
+    private String splitOutKey(KafkaParts parts, String content) {
+        String headerContent = null;
+        String[] keySplitContent = content.split(KEY_BOUNDARY, 2);
+        if (keySplitContent.length > 1) {
+            parts.key = keySplitContent[0].trim();
+            headerContent = keySplitContent[1].stripLeading();
+        } else {
+            headerContent = content;
+        }
+        
+        return headerContent;
+    }
+    
+    private void splitOutHeaders(KafkaParts parts, String content) {
+        // headers
+        String[] splitContent = content.split(HEADER_BOUNDARY, 2);
+        if (splitContent.length > 1) {
+            parts.headers = this.buildHeaders(splitContent[0]);
+            parts.body = splitContent[1].stripLeading();
+        } else {
+            parts.body = splitContent[0].stripLeading();
+        }
     }
     
     /**

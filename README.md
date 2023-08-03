@@ -20,24 +20,32 @@ For example a JSON that is pretty printed.
 
 This allows easy scanning and editing the file when testing.
 
-### Adding Headers to Kafka message
+### Adding a Key and Headers to the Kafka message
 
-However, if headers are needed in the Kafka message the following format can be used:
+However, if a key and headers are needed in the Kafka message the following format can be used:
 
-At the top of the file add the following  `--header` delimiter.
+At the top of the file add the `--key` delimiter.
+Every line above that delimiter will be expected to be the value of the key. 
+It is also expected that it will be one line and always appear first if it is needed.
+
+At the top of the file (but below the `--key` delimiter if there is one) add the `--header` delimiter.
 Every line above that delimiter will be expected to be a key value pair separated by a colon (:).
 All of the content below that delimiter will be considered the body of the Kafka message.
 
 ```
+foo
+--key
 hello:world
+ghost:buster
 --header
 foobar
 ```
 
 The contents above will result in a single Kafka message.
-The body will be `foobar` and there will be one header. 
-The key for the header will be `hello` and the value will be `world`. 
-
+The body will be `foobar` and there will be two headers. 
+The key for one of the headers will be `hello` and the value will be `world`. 
+The key for the other header will be `ghost` and the value will be `buster`. 
+The key for the Kafka payload will be `foo`.
 
 ## Build the Uber JAR
 

@@ -35,7 +35,7 @@ class DefaultContentHandlerTest {
     }
     
     @Test
-    void test_splitContentIntoParts_noHeaders() {
+    void test_splitContentIntoParts_noKey_noHeaders() {
         String content = "foo\r\nbar";
         
         KafkaParts parts = contentHandler.splitContentIntoParts(content);
@@ -67,6 +67,65 @@ class DefaultContentHandlerTest {
         assertEquals("value2", new String(headers.get(1).value()));
         
         assertEquals(content, parts.body);
+    }
+    
+    @Test
+    void test_splitContentIntoParts_withKey() {
+        String content = "foo\r\nbar";
+        String fullContent = this.contentWithKey("boo", content); 
+        
+        System.out.println(fullContent);
+        
+        KafkaParts parts = contentHandler.splitContentIntoParts(fullContent);
+        
+        assertNotNull(parts);
+        assertEquals("boo", parts.key);
+        
+        List<Header> headers = parts.headers;
+        assertNull(headers);
+
+        assertEquals(content, parts.body);
+    }
+    
+    @Test
+    void test_splitContentIntoParts_withKeyAndHeaders() {
+        String content = "foo\r\nbar";
+        String fullContent = this.contentWithKeyAndHeader("boo", content); 
+        
+        System.out.println(fullContent);
+        
+        KafkaParts parts = contentHandler.splitContentIntoParts(fullContent);
+        
+        assertNotNull(parts);
+        assertEquals("boo", parts.key);
+        
+        List<Header> headers = parts.headers;
+        assertNotNull(headers);
+        assertEquals(2, headers.size());
+        
+        assertEquals("key", headers.get(0).key());
+        assertEquals("value", new String(headers.get(0).value()));
+        
+        assertEquals("key2", headers.get(1).key());
+        assertEquals("value2", new String(headers.get(1).value()));
+        
+        assertEquals(content, parts.body);
+    }
+    
+    private String contentWithKeyAndHeader(String keyValue, String content) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(keyValue).append("\r\n");
+        sb.append(DefaultContentHandler.KEY_BOUNDARY).append("\r\n");
+        sb.append(this.contentWithHeader(content));
+        return sb.toString();
+    }
+    
+    private String contentWithKey(String keyValue, String content) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(keyValue).append("\r\n");
+        sb.append(DefaultContentHandler.KEY_BOUNDARY).append("\r\n");
+        sb.append(content);
+        return sb.toString();
     }
     
     private String contentWithHeader(String content) {
