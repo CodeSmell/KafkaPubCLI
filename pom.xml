@@ -10,21 +10,21 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
 		<checkstyle.fail.on.violation>true</checkstyle.fail.on.violation>
 		<checkstyle.fail.on.error>false</checkstyle.fail.on.error>
-		<kafka.clients.version>2.1.0</kafka.clients.version>
+		<kafka.clients.version>3.8.0</kafka.clients.version>
 		<!-- testing -->
-		<junit.version>5.8.2</junit.version>
-		<mockito.version>4.8.1</mockito.version>
+		<junit.version>5.11.3</junit.version>
+		<mockito.version>5.14.2</mockito.version>
 		<!-- command line utils -->
-		<jcommander.version>1.81</jcommander.version>
-		<apache.common.lang.version>3.12.0</apache.common.lang.version>
+		<jcommander.version>1.82</jcommander.version>
+		<apache.common.lang.version>3.18.0</apache.common.lang.version>
 		<apache.common.collectionutils.version>4.1</apache.common.collectionutils.version>
 		<!-- logging -->
-		<slf4j.version>1.7.36</slf4j.version>
-		<logback.version>1.2.9</logback.version>
+		<slf4j.version>2.0.16</slf4j.version>
+		<logback.version>1.5.18</logback.version>
 		<logback.encoder.version>5.2</logback.encoder.version>
 	</properties>
 	<dependencies>
@@ -98,17 +98,17 @@
 			<!-- compiler options for all modules -->
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.8.0</version>
+				<version>3.13.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-enforcer-plugin</artifactId>
-				<version>1.3.1</version>
+				<version>3.5.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<version>2.7.6</version>
+				<version>3.4.1</version>
 				<executions>
 					<execution>
 						<goals>
