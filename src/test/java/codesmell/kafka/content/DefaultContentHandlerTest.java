@@ -26,116 +26,83 @@ class DefaultContentHandlerTest {
         KafkaParts parts = contentHandler.splitContentIntoParts(content);
         assertNull(parts);
     }
-    
+
     @Test
     void test_splitContentIntoParts_empty() {
         String content = "";
         KafkaParts parts = contentHandler.splitContentIntoParts(content);
         assertNull(parts);
     }
-    
+
     @Test
     void test_splitContentIntoParts_noKey_noHeaders() {
-        String content = "foo\r\nbar";
-        
+        String content = """
+            foo
+            bar""";
+           
         KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        
         assertNotNull(parts);
         assertEquals(null, parts.key);
         assertEquals(null, parts.headers);
         assertEquals(content, parts.body);
     }
-    
+
     @Test
     void test_splitContentIntoParts_withHeaders() {
-        String content = "foo\r\nbar";
-        String fullContent = this.contentWithHeader(content); 
+        String content = """
+            header1:value1
+            header2:value2
+            --header
+            foo""";
         
-        KafkaParts parts = contentHandler.splitContentIntoParts(fullContent);
-        
+        KafkaParts parts = contentHandler.splitContentIntoParts(content);
         assertNotNull(parts);
         assertEquals(null, parts.key);
-        
         List<Header> headers = parts.headers;
         assertNotNull(headers);
         assertEquals(2, headers.size());
-        
-        assertEquals("key", headers.get(0).key());
-        assertEquals("value", new String(headers.get(0).value()));
-        
-        assertEquals("key2", headers.get(1).key());
+        assertEquals("header1", headers.get(0).key());
+        assertEquals("value1", new String(headers.get(0).value()));
+        assertEquals("header2", headers.get(1).key());
         assertEquals("value2", new String(headers.get(1).value()));
-        
-        assertEquals(content, parts.body);
+        assertEquals("foo", parts.body);
     }
-    
+
     @Test
     void test_splitContentIntoParts_withKey() {
-        String content = "foo\r\nbar";
-        String fullContent = this.contentWithKey("boo", content); 
+        String content = """
+            boo
+            --key
+            foo""";
         
-        System.out.println(fullContent);
-        
-        KafkaParts parts = contentHandler.splitContentIntoParts(fullContent);
-        
+        KafkaParts parts = contentHandler.splitContentIntoParts(content);
         assertNotNull(parts);
         assertEquals("boo", parts.key);
-        
         List<Header> headers = parts.headers;
         assertNull(headers);
-
-        assertEquals(content, parts.body);
+        assertEquals("foo", parts.body);
     }
-    
+
     @Test
     void test_splitContentIntoParts_withKeyAndHeaders() {
-        String content = "foo\r\nbar";
-        String fullContent = this.contentWithKeyAndHeader("boo", content); 
+        String content = """
+            boo
+            --key
+            header1:value1
+            header2:value2
+            --header
+            foo""";
         
-        System.out.println(fullContent);
-        
-        KafkaParts parts = contentHandler.splitContentIntoParts(fullContent);
-        
+        KafkaParts parts = contentHandler.splitContentIntoParts(content);
         assertNotNull(parts);
         assertEquals("boo", parts.key);
-        
         List<Header> headers = parts.headers;
         assertNotNull(headers);
         assertEquals(2, headers.size());
-        
-        assertEquals("key", headers.get(0).key());
-        assertEquals("value", new String(headers.get(0).value()));
-        
-        assertEquals("key2", headers.get(1).key());
+        assertEquals("header1", headers.get(0).key());
+        assertEquals("value1", new String(headers.get(0).value()));
+        assertEquals("header2", headers.get(1).key());
         assertEquals("value2", new String(headers.get(1).value()));
-        
-        assertEquals(content, parts.body);
+        assertEquals("foo", parts.body);
     }
-    
-    private String contentWithKeyAndHeader(String keyValue, String content) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(keyValue).append("\r\n");
-        sb.append(DefaultContentHandler.KEY_BOUNDARY).append("\r\n");
-        sb.append(this.contentWithHeader(content));
-        return sb.toString();
-    }
-    
-    private String contentWithKey(String keyValue, String content) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(keyValue).append("\r\n");
-        sb.append(DefaultContentHandler.KEY_BOUNDARY).append("\r\n");
-        sb.append(content);
-        return sb.toString();
-    }
-    
-    private String contentWithHeader(String content) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("key:value").append("\r\n");
-        sb.append("key2:value2").append("\r\n");
-        sb.append(DefaultContentHandler.HEADER_BOUNDARY).append("\r\n");
-        sb.append(content);
-        
-        return sb.toString();
-    }
-
 }
