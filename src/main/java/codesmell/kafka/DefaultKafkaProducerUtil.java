@@ -33,44 +33,52 @@ public class DefaultKafkaProducerUtil {
      */
     public void processMessagesInDirectory(String messageLocation) {
         boolean keepRunning = true;
-        
+
         File messageDirectory = this.findMessageLocationAsFile(messageLocation);
 
         while (keepRunning) {
             LOGGER.info("looking for files in " + messageLocation);
             File[] files = this.pollDirectory(messageDirectory);
 
-            for (File file : files) {
-                LOGGER.info("processing a file - " + file.getName());
-                String fileContents = this.readFileContents(file);
-                
-                ProducerRecord<String, String> record = contentHandler.processContent(args.getTopic(), fileContents);
-                boolean isProcessedSuccessfully = this.sendRecord(producer, record);
-                
-                if (isProcessedSuccessfully) {
-                    // sent successfully
-                    // so remove it (based on config)
-                    if (args.isNoDeleteFiles()) {
-                        LOGGER.info("based on config will not be deleting files!");
-                    } else {
-                        file.delete();
-                    }
-                } else {
-                    LOGGER.info("could not publish message...");
-                    // TODO: should allow break and stop 
-                    // as well as keep trying options
+            if (files == null || files.length == 0) {
+                LOGGER.info("no files found...");
+            } else {
+                for (File file : files) {
+                    this.processFile(file);
                 }
-                
-                producer.flush();
             }
 
             keepRunning = this.keepRunningWithDelay();
         }
     }
-    
+
+    private void processFile(File file) {
+        LOGGER.info("processing a file - " + file.getName());
+        String fileContents = this.readFileContents(file);
+
+        ProducerRecord<String, String> record = contentHandler.processContent(args.getTopic(), fileContents);
+        boolean isProcessedSuccessfully = this.sendRecord(producer, record);
+
+        if (isProcessedSuccessfully) {
+            // sent successfully
+            // so remove it (based on config)
+            if (args.isNoDeleteFiles()) {
+                LOGGER.info("based on config will not be deleting files!");
+            } else {
+                file.delete();
+            }
+        } else {
+            LOGGER.info("could not publish message...");
+            // TODO: should allow break and stop
+            // as well as keep trying options
+        }
+
+        producer.flush();
+    }
+
     private boolean keepRunningWithDelay() {
         boolean keepRunning = true;
-        
+
         if (args.isRunOnce()) {
             keepRunning = false;
         } else {
@@ -80,7 +88,7 @@ public class DefaultKafkaProducerUtil {
                 // ignoring
             }
         }
-        
+
         return keepRunning;
     }
 
@@ -103,22 +111,20 @@ public class DefaultKafkaProducerUtil {
 
     private boolean sendRecord(KafkaProducer<String, String> kp, ProducerRecord<String, String> record) {
         boolean sentRecord = false;
-        
+
         try {
             RecordMetadata recordMetadata = producer.send(record).get();
             sentRecord = true;
-            
+
             LOGGER.info("wrote {} to partition {} at offset {}", record.value(),
                     recordMetadata.partition(),
                     recordMetadata.offset());
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         return sentRecord;
     }
-
- 
 
 }
