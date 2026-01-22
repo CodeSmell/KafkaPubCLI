@@ -1,5 +1,6 @@
 package codesmell.kafka;
 
+import codesmell.file.DefaultDirectoryPollingService;
 import codesmell.kafka.content.DefaultContentHandler;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
@@ -40,7 +41,10 @@ public class KafkaMain {
      * publish all of the files in a given directory
      */
     public static void doKafkaPublish(ProducerArgs cliArgs) {
-        DefaultKafkaProducerUtil util = new DefaultKafkaProducerUtil(cliArgs, new DefaultContentHandler());
+        DefaultKafkaProducerUtil util = new DefaultKafkaProducerUtil(
+            cliArgs, 
+            new DefaultContentHandler(),
+            new DefaultDirectoryPollingService());
         util.processMessagesInDirectory(cliArgs.getMessageLocation());
     }
     
