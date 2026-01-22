@@ -36,6 +36,8 @@ public class DefaultContentHandler implements ContentHandler {
         
     }
     
+    // TODO: consider using pattern matching and switch expressions (JDK 17+)
+    // as well as Optional to reduce null checks
     protected KafkaParts splitContentIntoParts(String content) {
         KafkaParts parts = null;
         
@@ -93,6 +95,7 @@ public class DefaultContentHandler implements ContentHandler {
                 headers = new ArrayList<>();
 
                 for (String header : splitHeaders) {
+                    // TODO: handle bad formatted headers missing colon
                     String[] splitKeyValue = header.split(":");
                     if (ArrayUtils.isNotEmpty(splitKeyValue)) {
                         String key = splitKeyValue[0];
@@ -110,11 +113,11 @@ public class DefaultContentHandler implements ContentHandler {
             String key, List<Header> headers, String bodyContents) {
         
         Integer partition = null; // any partition will be fine
-        Long timestamp = null; // let broker assign
-        
+        Long timestamp = null; // let broker assign timestamp
         return new ProducerRecord<>(topic, partition, timestamp, key, bodyContents, headers);
     }
     
+    // TODO: replace with a record
     public class KafkaParts {
         String key;
         List<Header> headers;
