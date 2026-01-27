@@ -34,7 +34,7 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
         boolean keepRunning = true;
 
         while (keepRunning) {
-            LOGGER.info("looking for files in " + messageLocation);
+            LOGGER.info("looking for files in {}", messageLocation);
 
             boolean shouldDeleteFiles = !args.isNoDeleteFiles();
             directoryPollingService.pollDirectory(messageLocation, this::processFileContents, shouldDeleteFiles);
@@ -52,7 +52,11 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
             try {
                 Thread.sleep(args.getDelaySeconds());
             } catch (InterruptedException e) {
-                // ignoring
+                LOGGER.info("Wait during polling was interrupted, shutting down...");
+                // Restore interrupted status
+                // allows shutdown hooks to work properly
+                Thread.currentThread().interrupt(); 
+                keepRunning = false;
             }
         }
 
@@ -66,7 +70,7 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
      */
     private boolean processFileContents(String fileContents) {
         ProducerRecord<String, String> record = contentHandler.processContent(args.getTopic(), fileContents);
-        boolean isProcessedSuccessfully = this.sendRecord(producer, record);
+        boolean isProcessedSuccessfully = this.sendRecord(record);
 
         if (isProcessedSuccessfully) {
             LOGGER.info("message published successfully");
@@ -74,12 +78,13 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
             LOGGER.info("could not publish message...");
         }
 
-        producer.flush();
+        // Will move flush to close to improve performance
+        //producer.flush();
 
         return isProcessedSuccessfully;
     }
 
-    private boolean sendRecord(KafkaProducer<String, String> kp, ProducerRecord<String, String> record) {
+    private boolean sendRecord(ProducerRecord<String, String> record) {
         boolean sentRecord = false;
 
         try {
@@ -91,7 +96,7 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
                     recordMetadata.offset());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Failed to send record to topic '{}': {}", record.topic(), e.getMessage(), e);
         }
 
         return sentRecord;
@@ -105,6 +110,7 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
     public void close() throws Exception {
         if (producer != null) {
             LOGGER.info("closing Kafka producer...");
+            producer.flush();
             producer.close();
         }
     }

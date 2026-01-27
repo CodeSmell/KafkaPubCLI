@@ -3,6 +3,39 @@
 This utility will monitor a directory. It will publish each file in the specified directory to a Kafka topic.
 This CLI utility was built to enable easy testing of products that consume from Kafka topics. 
 
+## Overview of design
+
+┌─────────────────────────────────────────────────────────┐
+│                    KafkaMain                            │
+│                 (Entry Point)                           │
+│  - Parses CLI arguments                                 │
+│  - Manages dependencies.                                │
+└────────────────────┬────────────────────────────────────┘
+                     │ 
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│          DefaultKafkaProducerUtil                       │
+│            (Orchestrator/Coordinator)                   │
+└───┬──────────────────────┬──────────────────┬───────────┘
+    │                      │                  │
+    │ uses for             │ uses             │ uses
+    │ file polling         │ to parse         │ to send
+    │                      │ file content     │ to Kafka   
+    ▼                      ▼                  ▼
+┌───────────────────┐  ┌──────────────┐  ┌──────────────┐
+│DirectoryPolling   │  │ContentHandler│  │KafkaProducer │
+│Service            │  │              │  │              │
+│                   │  │(Parses file  │  │              │
+│(Generic file      │  │ content per  │  │              │
+│ utility - no      │  │ format)      │  │              │
+│ Kafka knowledge)  │  └──────────────┘  └──────────────┘
+│                   │  
+│• Polls directory  │
+│• Reads files      │
+│• Calls Predicate  │
+│• Deletes files    │
+│  on success       │     
+└───────────────────┘
 
 ## Format for the Files
 The utility does not expect any format when publishing only a body on a Kafka message. 

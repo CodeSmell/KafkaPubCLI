@@ -62,7 +62,7 @@ public class KafkaMain {
             util.processMessagesInDirectory(cliArgs.getMessageLocation());
             
         } catch (Exception e) {
-            LOGGER.error("Error processing messages", e);
+            LOGGER.error("Fatal error: failed to process messages from {}", cliArgs.getMessageLocation(), e);
         }
     }
 }
