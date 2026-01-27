@@ -8,7 +8,7 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultKafkaProducerUtil {
+public class DefaultKafkaProducerUtil implements AutoCloseable{
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultKafkaProducerUtil.class);
 
@@ -95,6 +95,18 @@ public class DefaultKafkaProducerUtil {
         }
 
         return sentRecord;
+    }
+
+    /**
+     * AutoCloseable implementation that closes the Kafka producer
+     * this allows use in try-with-resources blocks
+     */
+    @Override
+    public void close() throws Exception {
+        if (producer != null) {
+            LOGGER.info("closing Kafka producer...");
+            producer.close();
+        }
     }
 
 }

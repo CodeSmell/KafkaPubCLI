@@ -41,11 +41,28 @@ public class KafkaMain {
      * publish all of the files in a given directory
      */
     public static void doKafkaPublish(ProducerArgs cliArgs) {
-        DefaultKafkaProducerUtil util = new DefaultKafkaProducerUtil(
-            cliArgs, 
-            new DefaultContentHandler(),
-            new DefaultDirectoryPollingService());
-        util.processMessagesInDirectory(cliArgs.getMessageLocation());
+        // try-with-resources to ensure proper close
+        try (DefaultKafkaProducerUtil util = new DefaultKafkaProducerUtil(
+                cliArgs, 
+                new DefaultContentHandler(),
+                new DefaultDirectoryPollingService())) {
+            
+            // Register shutdown hook to gracefully 
+            // close the producer on Ctrl+C or shutdown
+            final DefaultKafkaProducerUtil utilRef = util;
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    utilRef.close();
+                } catch (Exception e) {
+                    LOGGER.error("Error closing producer on shutdown", e);
+                }
+            }));
+            
+            // this will run until interrupted (Ctrl+C)
+            util.processMessagesInDirectory(cliArgs.getMessageLocation());
+            
+        } catch (Exception e) {
+            LOGGER.error("Error processing messages", e);
+        }
     }
-    
 }
