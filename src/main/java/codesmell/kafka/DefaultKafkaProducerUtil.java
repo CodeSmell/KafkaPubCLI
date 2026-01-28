@@ -2,6 +2,8 @@ package codesmell.kafka;
 
 import codesmell.file.DirectoryPollingService;
 import codesmell.kafka.content.KafkaContentHandler;
+import codesmell.main.ProducerArgs;
+
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -20,8 +22,15 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
     public DefaultKafkaProducerUtil(ProducerArgs args,
             KafkaContentHandler contentHandler,
             DirectoryPollingService directoryPollingService) {
+        this(args, contentHandler, directoryPollingService, new DefaultKafkaProducerFactory());
+    }
+
+    public DefaultKafkaProducerUtil(ProducerArgs args,
+            KafkaContentHandler contentHandler,
+            DirectoryPollingService directoryPollingService,
+            KafkaProducerFactory producerFactory) {
         this.args = args;
-        this.producer = KafkaProducerFactory.buildKafkaProducer(args);
+        this.producer = producerFactory.buildProducer(args);
         this.contentHandler = contentHandler;
         this.directoryPollingService = directoryPollingService;
     }
@@ -50,7 +59,7 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
             keepRunning = false;
         } else {
             try {
-                Thread.sleep(args.getDelaySeconds());
+                Thread.sleep(args.getDelayMillis());
             } catch (InterruptedException e) {
                 LOGGER.info("Wait during polling was interrupted, shutting down...");
                 // Restore interrupted status

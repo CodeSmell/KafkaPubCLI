@@ -1,6 +1,7 @@
-package codesmell.kafka;
+package codesmell.main;
 
 import codesmell.file.DefaultDirectoryPollingService;
+import codesmell.kafka.DefaultKafkaProducerUtil;
 import codesmell.kafka.content.DefaultKafkaContentHandler;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
