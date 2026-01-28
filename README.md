@@ -11,28 +11,21 @@ This CLI utility was built to enable easy testing of products that consume from 
                  - Parses CLI arguments
                  - Manages dependencies
                           |
-                          | creates & wires
+                          | uses
                           v
               DefaultKafkaProducerUtil
-               (Orchestrator/Coordinator)
+                    (Coordinator)
                           |
-          +---------------+----------------+
-          |               |                |
-      uses for        uses to          uses to
-    file polling    parse content      send to Kafka
-          |               |                |
-          v               v                v
-  DirectoryPolling   ContentHandler   KafkaProducer
-     Service           (Parses)        (Kafka client)
-  (Generic file      file content
-   utility - no      per format
-   Kafka knowledge)
-
-  - Polls directory
-  - Reads files
-  - Calls Predicate
-  - Deletes files
-    on success
+          +------------------+-------------------+
+          |                  |                   |
+      uses for            uses to             uses to
+    file polling        parse file              send        
+          |               content             to Kafka
+          |                  |                   |
+          v                  v                   v
+  DirectoryPolling   KafkaContentHandler   KafkaProducer
+       Service          (Parses)             (Kafka)
+    (File Polling)
 ```
 
 **Key Design Principle:** 

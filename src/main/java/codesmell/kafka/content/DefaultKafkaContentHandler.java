@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class DefaultContentHandler implements ContentHandler {
+public class DefaultKafkaContentHandler implements KafkaContentHandler {
     
     public static final String KEY_BOUNDARY = "--key";
     public static final String HEADER_BOUNDARY = "--header"; 
@@ -22,7 +22,7 @@ public class DefaultContentHandler implements ContentHandler {
      * @return
      */
     @Override
-    public ProducerRecord<String, String> processContent(String topic, String content) {
+    public ProducerRecord<String, String> processContent(String kafkaTopic, String content) {
 
         KafkaParts parts = this.splitContentIntoParts(content);
         
@@ -30,7 +30,7 @@ public class DefaultContentHandler implements ContentHandler {
         List<Header> headers = parts.headers;
         String bodyContent = parts.body;
         
-        ProducerRecord<String, String> record = this.generateRecord(topic, key, headers, bodyContent);
+        ProducerRecord<String, String> record = this.generateRecord(kafkaTopic, key, headers, bodyContent);
         
         return record;
         

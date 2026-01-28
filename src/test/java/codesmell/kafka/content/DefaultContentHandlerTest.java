@@ -1,6 +1,6 @@
 package codesmell.kafka.content;
 
-import codesmell.kafka.content.DefaultContentHandler.KafkaParts;
+import codesmell.kafka.content.DefaultKafkaContentHandler.KafkaParts;
 import org.apache.kafka.common.header.Header;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,11 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class DefaultContentHandlerTest {
 
-    DefaultContentHandler contentHandler;
+    DefaultKafkaContentHandler contentHandler;
 
     @BeforeEach
     public void init() {
-        contentHandler = new DefaultContentHandler();
+        contentHandler = new DefaultKafkaContentHandler();
     }
 
     @Test
