@@ -1,4 +1,4 @@
-package codesmell.kafka;
+package codesmell.main;
 
 import com.beust.jcommander.Parameter;
 
@@ -72,9 +72,9 @@ public class ProducerArgs {
             required = true)
     private String messageLocation;
     
-    @Parameter(names = "-delayInSeconds", 
+    @Parameter(names = "-delayInMillis", 
             description = "how long to wait between file polls looking for new messages")
-    private Integer delaySeconds = 5000;
+    private Integer delayMillis = 1000;
     
     @Parameter(names = "-runOnce",
             description = "only poll messageLocation once when this parameter is added")
@@ -129,8 +129,8 @@ public class ProducerArgs {
         return messageLocation;
     }
 
-    public Integer getDelaySeconds() {
-        return delaySeconds;
+    public Integer getDelayMillis() {
+        return delayMillis;
     }
 
     public boolean isRunOnce() {
