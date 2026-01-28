@@ -1,136 +1,107 @@
 package codesmell.kafka.content;
 
-import codesmell.kafka.content.DefaultContentHandler.KafkaParts;
 import org.apache.kafka.common.header.Header;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DefaultContentHandlerTest {
 
-    DefaultContentHandler contentHandler;
+    DefaultKafkaContentHandler contentHandler;
 
     @BeforeEach
     public void init() {
-        contentHandler = new DefaultContentHandler();
+        contentHandler = new DefaultKafkaContentHandler();
     }
 
     @Test
-    void test_splitContentIntoParts_null() {
+    void test_processContents_null() {
+        String topic = null;
         String content = null;
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNull(parts);
+        var record = contentHandler.processContent(topic, content);
+        assertNull(record);
     }
 
     @Test
-    void test_splitContentIntoParts_empty() {
+    void test_processContents_empty() {
+        String topic = "";
         String content = "";
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNull(parts);
+        var record = contentHandler.processContent(topic, content);
+        assertNull(record);
     }
 
     @Test
-    void test_splitContentIntoParts_noKey_noHeaders() {
+    void test_processContent_OnlyBody() {
+        String topic = "theTopic";
         String content = """
                 foo
                 bar""";
 
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals(null, parts.key);
-        assertEquals(null, parts.headers);
-        assertEquals(content, parts.body);
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals(null, record.key());
+        assertNotNull(record.headers());
+        assertFalse(record.headers().iterator().hasNext());
+        assertEquals(content, record.value());
     }
 
-        @Test
-    void test_splitContentIntoParts_unicode_noKey_noHeaders() {
+    @Test
+    void test_processContent_OnlyBody_unicode() {
+        String topic = "theTopic";
         String content = """
                 ümlaut""";
 
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals(null, parts.key);
-        assertEquals(null, parts.headers);
-        assertEquals(content, parts.body);
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals(null, record.key());
+        assertNotNull(record.headers());
+        assertFalse(record.headers().iterator().hasNext());
+        assertEquals(content, record.value());
     }
 
     @Test
-    void test_splitContentIntoParts_withHeaders() {
-        String content = """
-                header1:value1
-                header2:value2
-                --header
-                foo""";
-
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals(null, parts.key);
-        List<Header> headers = parts.headers;
-        assertNotNull(headers);
-        assertEquals(2, headers.size());
-        assertEquals("header1", headers.get(0).key());
-        assertEquals("value1", new String(headers.get(0).value()));
-        assertEquals("header2", headers.get(1).key());
-        assertEquals("value2", new String(headers.get(1).value()));
-        assertEquals("foo", parts.body);
-    }
-
-    @Test
-    void test_splitContentIntoParts_withEmptyHeaders() {
-        String content = """
-                --header
-                foo""";
-
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals(null, parts.key);
-        List<Header> headers = parts.headers;
-        assertNull(headers);
-        assertEquals("foo", parts.body);
-    }
-
-    //@Test
-    void test_splitContentIntoParts_withBadHeaders() {
-        String content = """
-                boo
-                --header
-                foo""";
-
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals(null, parts.key);
-        List<Header> headers = parts.headers;
-        assertNotNull(headers);
-        assertEquals(2, headers.size());
-        assertEquals("header1", headers.get(0).key());
-        assertEquals("value1", new String(headers.get(0).value()));
-        assertEquals("header2", headers.get(1).key());
-        assertEquals("value2", new String(headers.get(1).value()));
-        assertEquals("foo", parts.body);
-    }
-
-    @Test
-    void test_splitContentIntoParts_withKey() {
+    void test_processContent_withKey() {
+        String topic = "theTopic";
         String content = """
                 boo
                 --key
                 foo""";
 
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals("boo", parts.key);
-        List<Header> headers = parts.headers;
-        assertNull(headers);
-        assertEquals("foo", parts.body);
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals("boo", record.key());
+        assertNotNull(record.headers());
+        assertFalse(record.headers().iterator().hasNext());
+        assertEquals("foo", record.value());                
     }
 
     @Test
-    void test_splitContentIntoParts_withMultiKeyBlocks() {
+    void test_processContent_withEmptyKey() {
+        String topic = "theTopic";
+        String content = """
+                --key
+                foo""";
+
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals(null, record.key());
+        assertNotNull(record.headers());
+        assertFalse(record.headers().iterator().hasNext());
+        assertEquals("foo", record.value());                
+    }
+
+    @Test
+    void test_processContent_withMultiKeyBlocks() {
+        String topic = "theTopic";
         String content = """
                 boo
                 --key
@@ -138,56 +109,107 @@ class DefaultContentHandlerTest {
                 --key                
                 foo""";
 
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals("boo", parts.key);
-        List<Header> headers = parts.headers;
-        assertNull(headers);
-                assertEquals("""
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals("boo", record.key());
+        assertNotNull(record.headers());
+        assertFalse(record.headers().iterator().hasNext());
+        assertEquals("""
                 hoo
                 --key                
-                foo""", parts.body);
-    }
+                foo""", record.value());                  
+    } 
 
     @Test
-    void test_splitContentIntoParts_withEmptyKey() {
+    void test_processContent_withHeaders() {
+        String topic = "theTopic";
         String content = """
-                --key
-                foo""";
-
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals("", parts.key);
-        List<Header> headers = parts.headers;
-        assertNull(headers);
-        assertEquals("foo", parts.body);
-    }
-
-    @Test
-    void test_splitContentIntoParts_withKeyAndHeaders() {
-        String content = """
-                boo
-                --key
                 header1:value1
                 header2:value2
                 --header
                 foo""";
 
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals("boo", parts.key);
-        List<Header> headers = parts.headers;
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals(null, record.key());
+        assertEquals("foo", record.value());
+
+        // Verify headers order and values
+        java.util.List<Header> headers = new java.util.ArrayList<>();
+        record.headers().forEach(headers::add);
         assertNotNull(headers);
         assertEquals(2, headers.size());
         assertEquals("header1", headers.get(0).key());
         assertEquals("value1", new String(headers.get(0).value()));
         assertEquals("header2", headers.get(1).key());
         assertEquals("value2", new String(headers.get(1).value()));
-        assertEquals("foo", parts.body);
     }
 
     @Test
-    void test_splitContentIntoParts_bodyContainsBoundary_withKeyAndHeader() {
+    void test_processContent_withEmptyHeaders() {
+        String topic = "theTopic";
+        String content = """
+                --header
+                foo""";
+
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals(null, record.key());
+        assertNotNull(record.headers());
+        assertFalse(record.headers().iterator().hasNext());        
+        assertEquals("foo", record.value());
+    }
+
+    @Test
+    void test_processContent_withBadHeaders() {
+        String topic = "theTopic";
+        String content = """
+                boo
+                --header
+                foo""";
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            contentHandler.processContent(topic, content);
+        });
+    }
+
+    @Test
+    void test_processContent_withKeyAndHeaders() {
+        String topic = "theTopic";
+        String content = """
+                keyValue
+                --key
+                h1:v1
+                h2:v2
+                --header
+                foo
+                bar""";
+
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals("keyValue", record.key());
+        assertEquals("""
+                foo
+                bar""", record.value());
+
+        // Verify headers order and values
+        java.util.List<Header> headers = new java.util.ArrayList<>();
+        record.headers().forEach(headers::add);
+        assertNotNull(headers);
+        assertEquals(2, headers.size());
+        assertEquals("h1", headers.get(0).key());
+        assertEquals("v1", new String(headers.get(0).value()));
+        assertEquals("h2", headers.get(1).key());
+        assertEquals("v2", new String(headers.get(1).value()));
+    }
+
+    @Test
+    void test_processContent_bodyContainsBoundary_withKeyAndHeader() {
+        String topic = "theTopic";
         String content = """
                 keyValue
                 --key
@@ -201,13 +223,11 @@ class DefaultContentHandlerTest {
                 markers
                 end""";
 
-        KafkaParts parts = contentHandler.splitContentIntoParts(content);
-        assertNotNull(parts);
-        assertEquals("keyValue", parts.key);
-        assertNotNull(parts.headers);
-        assertEquals(1, parts.headers.size());
-        assertEquals("h", parts.headers.get(0).key());
-        assertEquals("value", new String(parts.headers.get(0).value()));
+
+        var record = contentHandler.processContent(topic, content);
+        assertNotNull(record);
+        assertEquals(topic, record.topic());
+        assertEquals("keyValue", record.key());
         assertEquals("""
                 body line
                 contains
@@ -215,34 +235,14 @@ class DefaultContentHandlerTest {
                 and
                 --key
                 markers
-                end""", parts.body);
-    }
-
-    @Test
-    void test_processContent() {
-        String content = """
-                keyValue
-                --key
-                h1:v1
-                h2:v2
-                --header
-                theBody""";
-
-        var record = contentHandler.processContent("theTopic", content);
-        assertNotNull(record);
-        assertEquals("theTopic", record.topic());
-        assertEquals("keyValue", record.key());
-        assertEquals("theBody", record.value());
+                end""", record.value());
 
         // Verify headers order and values
         java.util.List<Header> headers = new java.util.ArrayList<>();
         record.headers().forEach(headers::add);
         assertNotNull(headers);
-        assertEquals(2, headers.size());
-        assertEquals("h1", headers.get(0).key());
-        assertEquals("v1", new String(headers.get(0).value()));
-        assertEquals("h2", headers.get(1).key());
-        assertEquals("v2", new String(headers.get(1).value()));
+        assertEquals(1, headers.size());
+        assertEquals("h", headers.get(0).key());
+        assertEquals("value", new String(headers.get(0).value()));
     }
-
 }

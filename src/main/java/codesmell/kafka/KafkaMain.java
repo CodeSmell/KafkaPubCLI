@@ -1,7 +1,7 @@
 package codesmell.kafka;
 
 import codesmell.file.DefaultDirectoryPollingService;
-import codesmell.kafka.content.DefaultContentHandler;
+import codesmell.kafka.content.DefaultKafkaContentHandler;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterException;
 import org.slf4j.Logger;
@@ -44,7 +44,7 @@ public class KafkaMain {
         // try-with-resources to ensure proper close
         try (DefaultKafkaProducerUtil util = new DefaultKafkaProducerUtil(
                 cliArgs, 
-                new DefaultContentHandler(),
+                new DefaultKafkaContentHandler(),
                 new DefaultDirectoryPollingService())) {
             
             // Register shutdown hook to gracefully 

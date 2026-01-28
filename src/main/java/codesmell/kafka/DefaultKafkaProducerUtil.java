@@ -1,7 +1,7 @@
 package codesmell.kafka;
 
 import codesmell.file.DirectoryPollingService;
-import codesmell.kafka.content.ContentHandler;
+import codesmell.kafka.content.KafkaContentHandler;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -14,11 +14,11 @@ public class DefaultKafkaProducerUtil implements AutoCloseable{
 
     private final ProducerArgs args;
     private final KafkaProducer<String, String> producer;
-    private final ContentHandler contentHandler;
+    private final KafkaContentHandler contentHandler;
     private final DirectoryPollingService directoryPollingService;
 
     public DefaultKafkaProducerUtil(ProducerArgs args,
-            ContentHandler contentHandler,
+            KafkaContentHandler contentHandler,
             DirectoryPollingService directoryPollingService) {
         this.args = args;
         this.producer = KafkaProducerFactory.buildKafkaProducer(args);
